@@ -1,20 +1,17 @@
 # --------------------------------------------------------------------LAYOUT MODULES------------------------------------------------------------------------
 import tkinter as tk
-import tkinter.messagebox as tk_msg
 from PIL import ImageTk, Image
-
+import joblib
 # ------------------------------------------------------------PREDICTION & ANALYSATION MODULES--------------------------------------------------------------
 import numpy as np
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 from sklearn.linear_model import LinearRegression
-from sklearn.model_selection import KFold
 
-file = pd.read_csv("K:\\TRAINING PROJECT\\admission_data.csv")
-file.rename(columns={'Chance of Admit ': 'Chance of Admit',
-                     'LOR ': 'LOR'}, inplace=True)
-
+path = r'K:\PROGRAMS\PYTHON\UAPS\UAPS---UNIVERSITY_ADMISSION_PREDICTION_SYSTEM\\'
+model1 = joblib.load(path+'UAPS1.pkl')
+model2 = joblib.load(path+'UAPS2.pkl')
 
 class features:
     def __init__(self, frame):
@@ -34,36 +31,43 @@ class features:
         self._gre = tk.DoubleVar()
         self.gre = tk.Entry(self.frame, textvariable=self._gre, font=(
             self.font_style, self.font_size), bg=self.bg_color, fg=self.fg_color)
+        self.gre.bind('<FocusOut>', self.validate_gre)
 
         self._toefl_label = tk.Label(self.frame, text="TOEFL Score")
         self._toefl = tk.DoubleVar()
         self.toefl = tk.Entry(self.frame, textvariable=self._toefl, font=(
             self.font_style, self.font_size), bg=self.bg_color, fg=self.fg_color)
+        self.toefl.bind('<FocusOut>', self.validate_toefl)
 
         self._u_rating_label = tk.Label(self.frame, text="University Rating")
         self._u_rating = tk.DoubleVar()
         self.u_rating = tk.Entry(self.frame, textvariable=self._u_rating, font=(
             self.font_style, self.font_size), bg=self.bg_color, fg=self.fg_color)
+        self.u_rating.bind('<FocusOut>', self.validate_u_rating)
 
-        self._sop_label = tk.Label(self.frame, text="SOP")
+        self._sop_label = tk.Label(self.frame, text="Strength of SOP")
         self._sop = tk.DoubleVar()
         self.sop = tk.Entry(self.frame, textvariable=self._sop, font=(
             self.font_style, self.font_size), bg=self.bg_color, fg=self.fg_color)
+        self.sop.bind('<FocusOut>', self.validate_sop)
 
-        self._lor_label = tk.Label(self.frame, text="LOR")
+        self._lor_label = tk.Label(self.frame, text="Strength of LOR")
         self._lor = tk.DoubleVar()
         self.lor = tk.Entry(self.frame, textvariable=self._lor, font=(
             self.font_style, self.font_size), bg=self.bg_color, fg=self.fg_color)
+        self.lor.bind('<FocusOut>', self.validate_lor)
 
         self._cgpa_label = tk.Label(self.frame, text="CGPA")
         self._cgpa = tk.DoubleVar()
         self.cgpa = tk.Entry(self.frame, textvariable=self._cgpa, font=(
             self.font_style, self.font_size), bg=self.bg_color, fg=self.fg_color)
+        self.cgpa.bind('<FocusOut>', self.validate_cgpa)
 
-        self._research_label = tk.Label(self.frame, text="Research")
+        self._research_label = tk.Label(self.frame, text="Research Experience")
         self._research = tk.IntVar()
         self.research = tk.Entry(self.frame, textvariable=self._research, font=(
             self.font_style, self.font_size), bg=self.bg_color, fg=self.fg_color)
+        self.research.bind('<FocusOut>', self.validate_research)
 
         self.check = tk.Button(self.frame, text="Check", command=self.show_result_form1, font=(
             self.font_style, self.font_size))
@@ -71,24 +75,61 @@ class features:
         self.home_btn = tk.Button(self.frame, text="Home", command=self.home, font=(
             self.font_style, self.font_size))
         self.home_btn.grid(row=7, column=1, columnspan=4)
+    
+    # --------------------------------------------------------------VALIDATION---------------------------------------------------------------
 
-        # ----------------------------------------------------------------MODEL CREATION & PREDICTION-----------------------------------------------------------------
-        self.kf = KFold(n_splits=200)
-        # --------------------------------------------------------------------------MODEL 1---------------------------------------------------------------------------
-        mod_file = file.drop(["Chance of Admit"], axis="columns")
-        Chance_of_admit = pd.DataFrame(file["Chance of Admit"])
+    def validate_gre(self, event):
+        gre = float(self.gre.get())
+        if gre > 340:
+            self._gre.set(340.0)
+    
+    def validate_toefl(self, event):
+        toefl = float(self.toefl.get())
+        if toefl < 0:
+            self._toefl.set(0.0)
+        elif toefl > 120:
+            self._toefl.set(120.0)
+            
+    def validate_u_rating(self, event):
+        u_rating = float(self.u_rating.get())
+        if u_rating < 0:
+            self._u_rating.set(0.0)
+        elif u_rating > 5:
+            self._u_rating.set(5.0)
+    
+    def validate_sop(self, event):
+        sop = float(self.sop.get())
+        if sop < 0:
+            self._sop.set(0.0)
+        elif sop > 5:
+            self._sop.set(5.0)
+        
+    def validate_lor(self, event):
+        lor = float(self.lor.get())
+        if lor < 0:
+            self._lor.set(0.0)
+        elif lor > 5:
+            self._lor.set(5.0)
 
-        self.f1_X_train, self.f1_X_test, self.f1_y_train, self.f1_y_test = self.train_test_case(
-            mod_file, Chance_of_admit, self.get_score1)
+    
+    def validate_cgpa(self, event):
+        cgpa = float(self.cgpa.get())
+        if cgpa < 0:
+            self._cgpa.set(0.0)
+        elif cgpa > 10:
+            self._cgpa.set(10.0)
 
-        # --------------------------------------------------------------------------MODEL 2---------------------------------------------------------------------------
-        U_rating = file["University Rating"]
-        mod_file_1 = file.drop(
-            ["Chance of Admit", "University Rating"], axis="columns")
-        self.f2_X_train, self.f2_X_test, self.f2_y_train, self.f2_y_test = self.train_test_case(
-            U_rating, mod_file_1, self.get_score2)
+            
+    def validate_research(self, event):
+        research = float(self.u_rating.get())
+        if research < 0:
+            self._research.set(0.0)
+        elif research > 1:
+            self._research.set(1.0)
 
-        # --------------------------------------------------------------END MODEL CREATION & PREDICTION---------------------------------------------------------------
+
+    # --------------------------------------------------------------END VALIDATION------------------------------------------------------------
+
 
     def home(self):
         self.frame.destroy()
@@ -114,51 +155,28 @@ class features:
         self._research_label.grid(row=4, column=0)
         self.research.grid(row=4, column=1)
 
-    def train_test_case(self, input, output, score_calculator):
-        score = [0]
-        f_X_train, f_X_test, f_y_train, f_y_test = 0, 0, 0, 0
-        for train_index, test_index in self.kf.split(input):
-            X_train, X_test, y_train, y_test = input.loc[train_index], input.loc[
-                test_index], output.loc[train_index], output.loc[test_index]
-            res = round(score_calculator(LinearRegression(),
-                                         X_train, X_test, y_train, y_test)*100, 2)
-            if res > max(score):
-                f_X_train, f_X_test, f_y_train, f_y_test = X_train, X_test, y_train, y_test
-            score.append(res)
-        return f_X_train, f_X_test, f_y_train, f_y_test
-
-    def get_score1(self, model, X_train, X_test, y_train, y_test):
-        model.fit(X_train, y_train)
-        return model.score(X_test, y_test)
-
     def show_result_form1(self):
         _result = tk.StringVar()
         _result.set("")
         result = tk.Label(self.frame, textvariable=_result)
-
-        # ----------------------------------------------------------------MODEL CREATION & PREDICTION-----------------------------------------------------------------
-        model = LinearRegression()
-        model.fit(self.f1_X_train, self.f1_y_train)
-        # --------------------------------------------------------------END MODEL CREATION & PREDICTION---------------------------------------------------------------
-
+        
         try:
-            _ans = np.array(model.predict([[self._gre.get(), self._toefl.get(), self._u_rating.get(
+            _ans = np.array(model1.predict([[self._gre.get(), self._toefl.get(), self._u_rating.get(
             ), self._sop.get(), self._lor.get(), self._cgpa.get(), self._research.get()]]))
             _ans = round(_ans.flatten()[0]*100, 2)
 
             if (_ans >= 0):
+                if(_ans > 100):
+                    _ans = 100.00
                 pass
             else:
                 _ans = 0
-            _result.set("Chance of admission: "+str(_ans)+" %")
+            _result.set("      Chance of admission: "+str(_ans)+" %      ")
         except:
             _result.set("ERROR! Enter only valid numbers.")
-
+            
+            
         result.grid(row=5, column=1, columnspan=4)
-
-    def get_score2(self, model, X_train, X_test, y_train, y_test):
-        model.fit(np.array(X_train).reshape(-1, 1), y_train)
-        return model.score(np.array(X_test).reshape(-1, 1), y_test)
 
     def form2(self):
         self.check.configure(command=self.show_result_form2)
@@ -166,17 +184,12 @@ class features:
         self.u_rating.grid(row=1, column=1, columnspan=4)
 
     def show_result_form2(self):
-        # ----------------------------------------------------------------MODEL CREATION & PREDICTION-----------------------------------------------------------------
-        model = LinearRegression()
-        model.fit(pd.DataFrame(self.f2_X_train), self.f2_y_train)
-
         try:
-            _gre, _toefl, _sod, _lor, _cgpa, _research = np.array(model.predict([[self._u_rating.get()]])).flatten()
+            _gre, _toefl, _sod, _lor, _cgpa, _research = np.array(model2.predict([[self._u_rating.get()]])).flatten()
             if (_research<=0):
                 _research = 0
         except:
             _gre, _toefl, _sod, _lor, _cgpa, _research = 0, 0, 0, 0, 0, 0
-        # --------------------------------------------------------------END MODEL CREATION & PREDICTION---------------------------------------------------------------
         
         self._u_rating_label.grid(row=1, column=0, columnspan=2)
         self._gre_label.grid(row=2, column=0)
@@ -264,7 +277,7 @@ class Home:
         self.made_by.pack()
 
 def image(img):
-    path = "K:\TRAINING PROJECT\PHOTOS"+"\\"
+    path = r"K:\PROGRAMS\PYTHON\UAPS\UAPS---UNIVERSITY_ADMISSION_PREDICTION_SYSTEM\PHOTOS"+"\\"
     im = path+str(img)
     return ImageTk.PhotoImage(Image.open(im))
 
